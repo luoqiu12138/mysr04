@@ -23,7 +23,7 @@ namespace sgbotic {
     let triggerRegister: number = 0x01;
     let triggerCmd: number = 0x01;
 
-    let resultCm: number = 0x0A;
+    let resultCm: number = 0x01;
     let resultUs: number = 0X0C
 
     let newI2cAddrCmd: number = 0xE0;
@@ -75,7 +75,7 @@ namespace sgbotic {
     export function fnTrigger(i2cAddr: number) {
         let buf2 = pins.createBuffer(2);
 
-        buf2[0] = triggerRegister;
+        buf2[0] = 0x01;
 
         pins.i2cWriteBuffer(i2cAddr, buf2);
         //basic.pause(1)
@@ -87,11 +87,10 @@ namespace sgbotic {
     export function fnReadCm(i2cAddr: number): number {
         let cm: number;
 
-        pins.i2cWriteNumber(i2cAddr, resultCm, NumberFormat.UInt8BE)
-        basic.pause(1)
-        let readbuf = pins.i2cReadBuffer(i2cAddr, pins.sizeOf(NumberFormat.UInt8LE) * 2)
-
-        cm = (readbuf[0] * 256 + readbuf[1]);
+        pins.i2cWriteNumber(0XAE, resultCm, NumberFormat.UInt8BE)
+        basic.pause(100)
+        let readbuf = pins.i2cReadBuffer(0XAF, pins.sizeOf(NumberFormat.UInt8LE) * 3)
+        cm = (readbuf[0] * 65535 + readbuf[1]*256+readbuf[2])/1000;
         return (cm)
     }
 
@@ -125,8 +124,8 @@ namespace sgbotic {
    */
     //% subcategory=SR04-RGB
     //% group="single SR04-RGB"
-    //% blockId="initialize" block="initialize SR04 RGB addr%addr"
-    //% addr.defl=0x60
+    //% blockId="initialize" block="initialize SR04addr%addr"
+    //% addr.defl=0x57
     //% addr.min=0x08 addr.max=0x71
     //% weight=99 blockGap=20 color=3CB371
     export function initialize(addr: number) {
@@ -168,7 +167,7 @@ namespace sgbotic {
     //% weight=92 blockGap=20 color=3CB371
     export function trigger() {
         fnTrigger(i2cAddr);
-        basic.pause(10);
+        basic.pause(100);
     }
 
 
@@ -178,7 +177,7 @@ namespace sgbotic {
      */
     //% subcategory=SR04-RGB
     //% group="single SR04-RGB"
-    //% blockId="readcm" block="cm"
+    //% blockId="readcm" block="mm"
     //% weight=90 blockGap=20 color=3CB371
     export function readcm(): number {
         let cm: number = fnReadCm(i2cAddr);
